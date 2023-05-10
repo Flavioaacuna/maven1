@@ -1,5 +1,14 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good',
+    'Failure': 'danger'
+]
+def getBuildUser(){
+    return currentBuild.rawBuld.getCause(Cause.UserIdCause).getUserId()
+    
 pipeline {
 agent any
+environment{
+        BUILD_USER = ''
 stages {
 stage('Build') {
 steps {
@@ -65,10 +74,16 @@ error "*** File: ${artifactPath}, could not be found";
 }
 }
 
-post{
-failure{
-slackSend( channel: "#notificaciones-desde-jenkins", token: "slack_webhook token", color: "good", message: "${custom_msg()}")
-}
+post {
+        failure {
+
+            script{
+                BUILD_USER = getBuildUser()
+            }
+
+            slackSend channel 'notificaciones-desde-jenkins',
+                      color: COLOR_MAP[currentBuild.currentResult],
+                      message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} by ${BUILD_USER} \n More info at ${env.BUILD_URL)HTML_"
 
 
 }
