@@ -4,45 +4,42 @@ def COLOR_MAP = [
 ]
 def getBuildUser(){
     return currentBuild.rawBuld.getCause(Cause.UserIdCause).getUserId()
-    
+}
 pipeline {
-agent any
-environment{
+    agent any
+    environment{
         BUILD_USER = ''
-stages {
-stage('Build') {
-steps {
-sh 'mvn -B package'
+    }
+    stages {
+        stage('Build') {
+        steps {
+            sh 'mvn -B package'
 
 }
 }
 
-stage('SonarQube analysis') {
-environment {
-SCANNER_HOME = tool 'SonarQube Conexion'
+        stage('SonarQube analysis') {
+        environment {
+        SCANNER_HOME = tool 'SonarQube Conexion'
 }
-steps {
-withSonarQubeEnv(credentialsId: 'SecretTextContent', installationName: 'SonarQube') {
-sh '''$SCANNER_HOME/bin/sonar-scanner \
--Dsonar.projectKey=projectKey \
--Dsonar.projectName=projectName \
--Dsonar.sources=src/ \
--Dsonar.java.binaries=target/classes/ \
--Dsonar.exclusions=src/test/java/*/.java \
--Dsonar.projectVersion=${BUILD_NUMBER}-${GIT_COMMIT_SHORT}'''
+        steps {
+            withSonarQubeEnv(credentialsId: 'SecretTextContent', installationName: 'SonarQube') {
+            sh '''$SCANNER_HOME/bin/sonar-scanner \
+            -Dsonar.projectKey=projectKey \
+            -Dsonar.projectName=projectName \
+            -Dsonar.sources=src/ \
+            -Dsonar.java.binaries=target/classes/ \
+            -Dsonar.exclusions=src/test/java/*/.java \
+            -Dsonar.projectVersion=${BUILD_NUMBER}-${GIT_COMMIT_SHORT}'''
 }
 }
 }
 
-stage("Publish to Nexus Repository Manager") {
-steps {
-script {
-pom = readMavenPom file: "pom.xml";
-filesByGlob = findFiles(glob: "target/.${pom.packaging}");
-
-
-
-
+        stage("Publish to Nexus Repository Manager") {
+        steps {
+        script {
+            pom = readMavenPom file: "pom.xml";
+            filesByGlob = findFiles(glob: "target/.${pom.packaging}");
 
 
 echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
@@ -86,6 +83,7 @@ post {
                       message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} by ${BUILD_USER} \n More info at ${env.BUILD_URL}HTML_"
 
 
+}
 }
 }
 
